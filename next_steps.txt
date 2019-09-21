@@ -1,0 +1,9 @@
+*abstraer muuuuuuucho mas el core
+*documentar core
+
+*funcion de logs
+*hacerlo por clases
+*añadir manejo de cookies y storage
+*añadir des/habilitar enhanced ecommerce
+*estructura directa para ecommerce
+*campo que registra el ultimo evento?
