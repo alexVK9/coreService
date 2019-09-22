@@ -1,10 +1,5 @@
-COMENTARIOS:
-    *abstraer muuuuuuucho mas el core
-    *documentar core
-
 POR HACER:
-    *plantear pushes
+    *documentar core
     *añadir manejo de cookies y storage
     *añadir des/habilitar enhanced ecommerce
     *estructura directa para ecommerce
-    *campo que registra el ultimo evento?

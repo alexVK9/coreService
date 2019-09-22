@@ -1,3 +1,5 @@
+var Keen = require('keen-js');
+
 class Avcs {
     constructor() {
         //Variables
@@ -210,10 +212,10 @@ class Avcs {
             },
             // Si el usuario no tiene el local storage le asigna un número aletorio como local storage
             myCookie: function(){
-                var c = localStorage.getItem("velCookie");
+                var c = localStorage.getItem("tfgCookie");
                 if(c==null){
                     c = Math.random()*100000000000000000;
-                    localStorage.setItem("velCookie", c);
+                    localStorage.setItem("tfgCookie", c);
                 }
                 return c;
             },
@@ -228,98 +230,140 @@ class Avcs {
             }
         },
 
-        this.print = function(msg, category){
-            if(typeof category=='undefined')
-                category='';
-            // Nv. 0, todo
-            if(this.config.printEnable==0){
-                if(category.indexOf("error")>-1){
-                    console.log("%cError: "+msg, this.config.styles[0]);
-                }
-
-                if(category.indexOf("warning")>-1){
-                    console.log("%cWarning: "+msg, this.config.styles[1]);
-                }
-
-                if(category.indexOf("info")>-1){
-                    console.log("%cInfo: "+msg, this.config.styles[2]);
-                }
-
-                if(category.indexOf("temp")>-1){
-                    console.log("%cTemp: "+msg, this.config.styles[3]);
-                }
-            }
-            // Nv. 1, errores
-            if(this.config.printEnable==1){
-                if(category.indexOf("error")>-1){
-                    if(category.indexOf("error")>-1){
-                        console.log("%cError: "+msg, this.config.styles[0]);
-                    }
-                }
-            }
-
-            // Nv. 2, errores y warning
-            if(this.config.printEnable==2){
-                if(category.indexOf("error")>-1){
-                    console.log("%cError: "+msg, this.config.styles[0]);
-                }
-
-                if(category.indexOf("warning")>-1){
-                    console.log("%cWarning: "+msg, this.config.styles[1]);
-                }
-            }
-
-            // Nv. 3. informativo
-            if(this.config.printEnable==3){
-                if(category.indexOf("info")>-1){
-                    console.log("%cInfo: "+msg, this.config.styles[2]);
-                }
-            }
-
-            // Nv. 4. temporales
-            if(this.config.printEnable==4){
-                if(category.indexOf("temp")>-1){
-                    console.log("%cTemp: "+msg, this.config.styles[3]);
-                }
-            }
-        },
-
         this.setCustomVars = function(){
-            this.print("SET CUSTOM VARIABLES OK", "info");
+            Print.out("SET CUSTOM VARIABLES", this, "info");
         },
 
         // event : pageview, generic, ecommerce
-        this.push = function(fields){
-            this.print("PUSH OK", "info");
+        this.push = function(fields){            
+            this.beautifier(this);
             var tms=this.config.tms;
+
             for(let i=0;i<tms.length;i++){
                 var aux=JSON.stringify(tms[i]).replace(/{|}|\"/gi, "");
                 var key=aux.split(":")[0];
                 var value=aux.split(":")[1];
 
                 if(value=="true"){
+                    Print.out("PUSH "+this.event, this, "info");
                     if(key=="tfg"){
-                        
+                        if(this.event=="pageview"){
+                            this.vars.events[0].event=this.event;
+                        }else{
+                            this.event=fields.event;
+                            this.vars.events.push(fields);
+                        }
                     }
-                    this.print(key, "info");
+                    this.send(key);
                 }                
             }
+            
+
             this.event = "";
         },
 
-        this.sendTfg = function(){
-            this.print("SEND OK", "info");
+        this.send = function(tmg){
+            Print.out("SEND " + event.event+ " to "+tmg, this, "info");
         },
 
         this.ecommerce = function(){
-            this.print("ECOMMERCE OK", "info");
+            Print.out("ECOMMERCE ", this, "info");
         },
 
         this.init = function(){
-            this.print("INIT OK", "info");
+            Print.out("INIT", this, "info");
             this.setCustomVars();
             this.event = "pageview";
             this.push();
+        }
+
+        //Adapta cada valor del objeto a las caracteristicas lexicas
+        this.beautifier = function(){
+            Avcs.beatufierObj(this.vars, this);
+        }
+    }
+
+    //Recorre el objeto Avcs tratando los valores del objeto
+    static beatufierObj(obj, avcs){
+        jQuery.each(obj, function(k, v) {
+            if(typeof v=="object"){
+                Avcs.beatufierObj(v, avcs);
+            }else{
+                obj[k]=Avcs.beatufierString(k, v, avcs);
+            }
+          });
+    };
+
+    //Trata una cadena que luego es devuelta
+    static beatufierString(k, v, avcs){
+        var str=v;
+
+        str=str.toLowerCase();
+        str=str.replace(/â|ä|à|á|@/gi, "a");
+        str=str.replace(/ê|ë|è|é|€/gi, "e");
+        str=str.replace(/î|ï|ì|í/gi, "i");
+        str=str.replace(/ô|ö|ò|ó/gi, "o");
+        str=str.replace(/û|ü|ù|ú/gi, "u");
+        
+        return str;
+    }
+}
+
+class Print {
+    //mensaje, el objeto con la config, categoria del mensaje
+     static out(msg, avcs, category){
+        if(typeof category=='undefined')
+            category='';
+        // Nv. 0, todo
+        if(avcs.config.printEnable==0){
+            if(category.indexOf("error")>-1){
+                console.log("%cError: "+msg, avcs.config.styles[0]);
+            }
+
+            if(category.indexOf("warning")>-1){
+                console.log("%cWarning: "+msg, avcs.config.styles[1]);
+            }
+
+            if(category.indexOf("info")>-1){
+                console.log("%cInfo: "+msg, avcs.config.styles[2]);
+            }
+
+            if(category.indexOf("temp")>-1){
+                console.log("%cTemp: "+msg, avcs.config.styles[3]);
+            }
+        }
+        // Nv. 1, errores
+        if(avcs.config.printEnable==1){
+            if(category.indexOf("error")>-1){
+                if(category.indexOf("error")>-1){
+                    console.log("%cError: "+msg, avcs.config.styles[0]);
+                }
+            }
+        }
+
+        // Nv. 2, errores y warning
+        if(avcs.config.printEnable==2){
+            if(category.indexOf("error")>-1){
+                console.log("%cError: "+msg, avcs.config.styles[0]);
+            }
+
+            if(category.indexOf("warning")>-1){
+                console.log("%cWarning: "+msg, avcs.config.styles[1]);
+            }
+        }
+
+        // Nv. 3. informativo
+        if(avcs.config.printEnable==3){
+            if(category.indexOf("info")>-1){
+                console.log("%cInfo: "+msg, avcs.config.styles[2]);
+            }
+        }
+
+        // Nv. 4. temporales
+        if(avcs.config.printEnable==4){
+            if(category.indexOf("temp")>-1){
+                console.log("%cTemp: "+msg, avcs.config.styles[3]);
+            }
         }
     }
 }
